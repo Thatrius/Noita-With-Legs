@@ -1,0 +1,43 @@
+<Entity name="corpse" tags="prey,glue_NOT,ragdoll_entity">
+
+	<VariableStorageComponent
+	    _tags="gold_value"
+		value_int="0" >
+	</VariableStorageComponent>
+
+	<LuaComponent
+	    execute_every_n_frame="1"
+	    script_source_file="mods/more_physic/files/initialize_loot.lua"
+	    remove_after_executed="1" >
+	</LuaComponent>
+
+	<SpriteParticleEmitterComponent
+		_tags="enabled_in_world"
+		sprite_file="data/particles/shine_08.xml"
+		lifetime="0.2"
+		randomize_lifetime.min="0.1"
+		randomize_lifetime.max="0.8"
+		emission_interval_min_frames="50"
+		emission_interval_max_frames="250"
+		count_min="1"
+		count_max="1"
+		additive="1"
+		emissive="0"
+		scale.x="1.0"
+		scale.y="1.0"
+		sprite_random_rotation="1"
+		randomize_scale.min_x="-0.1" 
+		randomize_scale.max_x="0.1" 
+		randomize_scale.min_y="-0.1" 
+		randomize_scale.max_y="0.1" 
+		randomize_position.min_y="-3" 
+		randomize_position.max_y="3"
+		randomize_position.min_x="-3"  
+		randomize_position.max_x="3"
+		velocity_slowdown="6"
+		randomize_animation_speed_coeff.min="0.667"  
+		randomize_animation_speed_coeff.max="1.0" 
+		>
+	</SpriteParticleEmitterComponent>
+
+</Entity>

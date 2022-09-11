@@ -1,0 +1,84 @@
+<Entity name="snek">
+
+  <DamageModelComponent 
+    air_in_lungs="7" 
+    air_in_lungs_max="7" 
+    air_lack_of_damage="0" 
+    air_needed="0" 
+    falling_damage_damage_max="1.2" 
+    falling_damage_damage_min="0.1" 
+    falling_damage_height_max="250" 
+    falling_damage_height_min="70" 
+    falling_damages="0" 
+    fire_damage_amount="0.2" 
+    fire_probability_of_ignition="1" 
+    invincibility_frames="60"
+    hp="4" 
+    is_on_fire="0" 
+    materials_damage="1" 
+    materials_that_damage="acid,lava,blood_cold_vapour,blood_cold,radioactive_gas,radioactive_gas_static,rock_static_radioactive,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed,magic_gas_hp_regeneration,gold_radioactive,gold_static_radioactive,rock_static_cursed_green,cursed_liquid,poo_gas"  
+    materials_how_much_damage="0.005,0.003,0.0006,0.0009,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.005,-0.005,0.0002,0.0002,0.004,0.0005,0.00001" 
+    ragdoll_filenames_file="" 
+    ragdoll_offset_y="-5"
+    ragdollify_child_entity_sprites="1"
+    blood_material="magic_liquid_faster_levitation"
+    blood_spray_material="magic_liquid_faster_levitation"
+    physics_objects_damage="0"
+    critical_damage_resistance="1"
+    ><damage_multipliers
+      explosion="0.35" >
+    </damage_multipliers>
+  </DamageModelComponent>
+  <HitboxComponent 
+    aabb_max_x="3" 
+    aabb_max_y="3" 
+    aabb_min_x="-3" 
+    aabb_min_y="-3" 
+    is_enemy="1" 
+    is_item="0" 
+    is_player="0" >
+  </HitboxComponent>
+
+    <VerletPhysicsComponent
+    	num_points="20"
+    	stiffness="2.4"
+		velocity_dampening="0.7"
+    	resting_distance="4.5" 
+		constrain_stretching="1"
+		scale_sprite_x="0"
+    	pixelate_sprite_transforms="0"
+    	simulate_wind="1"
+        wind_change_speed="0.25"
+    	simulate_gravity="1" 
+		collide_with_cells="1"
+		>
+    </VerletPhysicsComponent>
+	<LuaComponent
+		script_source_file="mods/more_physic/files/flying_snek.lua"
+		execute_every_n_frame="1"
+		>
+	</LuaComponent>
+
+
+	<Base file="data/entities/verlet_chains/flying_snek/snek_head_verlet.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_1.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_2.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_2.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_2.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_2.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_2.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_3.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_3.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_3.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_3.xml" />
+	<Base file="data/entities/verlet_chains/flying_snek/snek_body_verlet_3.xml" />
+
+  
+</Entity>

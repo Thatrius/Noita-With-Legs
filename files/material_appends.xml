@@ -1,0 +1,52 @@
+<Materials>
+  <CellData
+	name="physics_collider_initialize"
+	ui_name="$mat_cloth"
+	tags="[box2d]"
+	burnable="0"
+	density="8"
+	durability="1000"
+	cell_type="solid"
+	wang_color="ff3b5d99"
+	generates_smoke="0"
+	on_fire="0"
+	solid_friction="0.7"
+	platform_type="0"
+	hp="50000000"
+	audio_physics_material_wall="cloth"
+	audio_physics_material_solid="cloth"
+	show_in_creative_mode="1"
+	solid_on_sleep_convert="0"
+	>
+	<Graphics
+		color="00010101">
+	</Graphics>
+  </CellData>
+
+
+  <CellDataChild
+  	_parent="physics_collider_initialize"
+  	_inherit_reactions="0"
+	tags="[box2d]"
+  	name="physics_collider" 
+	ui_name="$mat_cloth"
+	wang_color="ff937f98"
+	durability="1000"
+	platform_type="0"
+	solid_on_sleep_convert="0"
+	>
+  </CellDataChild>
+
+<Reaction probability="100"
+	input_cell1="physics_collider_initialize" input_cell2="physics_collider_initialize"
+	output_cell1="physics_collider" output_cell2="physics_collider"
+	blob_radius1="10"
+	blob_restrict_to_input_material1="10"
+	>
+</Reaction>
+<Reaction probability="100"
+	input_cell1="physics_collider_initialize" input_cell2="air"
+	output_cell1="physics_collider" output_cell2="air"
+	>
+</Reaction>
+</Materials>

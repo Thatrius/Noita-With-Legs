@@ -1,0 +1,19 @@
+<Entity >
+   
+  <SpriteComponent 
+    image_file="data/enemies_gfx/snek_head.png" 
+    offset_x="0"
+    offset_y="4.5"
+    update_transform="0"
+    update_transform_rotation="0" >
+  </SpriteComponent>
+  <HitboxComponent 
+    aabb_max_x="3" 
+    aabb_max_y="3" 
+    aabb_min_x="-3" 
+    aabb_min_y="-3" 
+    is_enemy="1" 
+    is_item="0" 
+    is_player="0" >
+  </HitboxComponent>
+</Entity>
