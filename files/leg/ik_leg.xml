@@ -1,0 +1,78 @@
+<Entity name="leg" >
+
+	<Entity tags="IK">
+		<SpriteComponent 
+			alpha="1" 
+			image_file="mods/more_physic/files/leg/leg_parts/thigh.xml" 
+			next_rect_animation="stand" 
+			z_index="1.1">
+		</SpriteComponent>
+		<_Transform 
+			scale.x="1.25" 
+			scale.y="1.25" >
+		</_Transform>
+		<VariableStorageComponent
+    		_tags="length"
+			value_int="4">
+    	</VariableStorageComponent>
+		<SpriteStainsComponent>
+    	</SpriteStainsComponent>
+	</Entity>
+
+	<Entity tags="IK">
+		<SpriteComponent
+			alpha="1" 
+			image_file="mods/more_physic/files/leg/leg_parts/shin.xml" 
+			next_rect_animation="stand" 
+			z_index="1.2">
+		</SpriteComponent>
+		<_Transform 
+			scale.x="0.6" 
+			scale.y="0.8" >
+		</_Transform>
+		<VariableStorageComponent
+    		_tags="length"
+			value_int="4">
+    	</VariableStorageComponent>
+		<SpriteStainsComponent>
+    	</SpriteStainsComponent>
+	</Entity>	
+
+
+    <VariableStorageComponent
+    	_tags="target_x"
+		value_float="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="target_y"
+		value_float="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="prev_x"
+		value_int="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="prev_y"
+		value_int="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="state"
+		value_int="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="direction"
+		value_int="1"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="total_length"
+		value_int="8"
+		>
+    </VariableStorageComponent>
+
+</Entity>

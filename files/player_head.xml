@@ -1,0 +1,27 @@
+  <Entity name="head" tags="player_head">
+  	<IKLimbComponent
+		length="7"
+		thigh_extra_lenght="0"
+		mJointSideInterpolation="1" >
+	</IKLimbComponent>
+    <SpriteComponent 
+      _tags="character,lukki_disable" 
+      image_file="mods/more_physic/files/head.png" 
+      offset_x="3.5" 
+      offset_y="5"
+      z_index="0.5"
+    ></SpriteComponent>
+    <HotspotComponent
+      _tags="mouth"
+      sprite_hotspot_name="mouth"
+      transform_with_scale="1"
+    ></HotspotComponent>
+    <VariableStorageComponent
+		  _tags="prev_x"
+		  value_int="0"
+	  ></VariableStorageComponent>
+      <VariableStorageComponent
+		  _tags="prev_y"
+		  value_int="0"
+	  ></VariableStorageComponent>
+  </Entity>

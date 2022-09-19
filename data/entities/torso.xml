@@ -1,0 +1,76 @@
+<Entity tags="mortal,human,hittable,homing_target,teleportable_NOT,destruction_target" >
+	
+	<VelocityComponent
+		updates_velocity="0" >
+	</VelocityComponent>
+
+	<CharacterCollisionComponent 
+		getting_crushed_threshold="6"
+		moving_up_before_getting_crushed_threshold="6" >
+	</CharacterCollisionComponent>
+
+	<CharacterDataComponent 
+		check_collision_max_size_x="8" 
+		check_collision_max_size_y="8" 
+		climb_over_y="2" 
+		collision_aabb_min_x="-2.0" 
+		collision_aabb_max_x="2.0" 
+		collision_aabb_min_y="-2" 
+		collision_aabb_max_y="2"
+		eff_hg_offset_y="1.28572" 
+		eff_hg_position_x="0" 
+		eff_hg_position_y="5" 
+		eff_hg_size_x="6.42857" 
+		eff_hg_size_y="5.14286" 
+		eff_hg_velocity_max_x="19.5787896514" 
+		eff_hg_velocity_max_y="-11.5714" 
+		eff_hg_velocity_min_x="-19.5714" 
+		eff_hg_velocity_min_y="-40" 
+		eff_hg_damage_min="10"
+    	eff_hg_damage_max="95"
+		effect_hit_ground="1" 
+		gravity="0" 
+		buoyancy_check_offset_y="0">
+	</CharacterDataComponent>
+	<CharacterPlatformingComponent
+		jump_keydown_buffer="2" 
+		jump_velocity_y="-125" 
+		fly_speed_max_up="90"
+		fly_speed_max_down="90"
+		fly_speed_mult="20"
+		fly_speed_change_spd="1"
+		mouse_look="0" 
+		mouse_look_buffer="1" 
+		pixel_gravity="350" 
+		run_velocity="28" 
+		fly_velocity_x="28" 
+		accel_x="0.15" 
+		turning_buffer="0.1" 
+		velocity_min_x="-10000" 
+		velocity_max_x="10000" 
+		velocity_min_y="-10000"
+		velocity_max_y="10000" >
+	</CharacterPlatformingComponent>
+
+    <SpriteAnimatorComponent>
+  </SpriteAnimatorComponent>
+
+	<ControlsComponent
+		enabled="0" >
+	</ControlsComponent>
+
+	<HitboxComponent
+		aabb_max_x="2" 
+		aabb_max_y="2" 
+		aabb_min_x="-2" 
+		aabb_min_y="-2" >
+	</HitboxComponent>
+
+  <AudioComponent
+    file="data/audio/Desktop/player.bank"
+    event_root="player"
+    audio_physics_material="character_player"
+    set_latest_event_position="1"
+  ></AudioComponent>
+
+</Entity>

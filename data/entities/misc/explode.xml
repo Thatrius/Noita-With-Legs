@@ -1,0 +1,14 @@
+<Entity >
+<LuaComponent
+	script_source_file="mods/more_physic/files/explode.lua"
+  	execute_times="15">
+</LuaComponent>
+<VariableStorageComponent
+	_tags="power"
+  	value_int="5">
+</VariableStorageComponent>
+<VariableStorageComponent
+	_tags="displacement"
+  	value_int="50">
+</VariableStorageComponent>
+</Entity>
