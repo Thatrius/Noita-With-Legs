@@ -51,6 +51,8 @@ for i,child in ipairs(EntityGetAllChildren(player)) do
         for i,leg in ipairs((EntityGetAllChildren(child) or {})) do
             if EntityGetName(leg) == "leg" then 
                 local state_comp = EntityGetFirstComponent(leg, "VariableStorageComponent", "state")
+                local footcomp_x = EntityGetFirstComponent(leg, "VariableStorageComponent", "foot_x")
+                local footcomp_y = EntityGetFirstComponent(leg, "VariableStorageComponent", "foot_y")
                 local targcomp_x = EntityGetFirstComponent(leg, "VariableStorageComponent", "target_x")
                 local targcomp_y = EntityGetFirstComponent(leg, "VariableStorageComponent", "target_y")
                 local lengthcomp = EntityGetFirstComponent(leg, "VariableStorageComponent", "total_length")
@@ -59,12 +61,13 @@ for i,child in ipairs(EntityGetAllChildren(player)) do
                 local state = ComponentGetValue2(state_comp, "value_int")
                 local length = ComponentGetValue2(lengthcomp, "value_int")
                 local dir = ComponentGetValue2(dircomp, "value_int")
-                local foot_x, foot_y = ComponentGetValue2(targcomp_x, "value_float"), ComponentGetValue2(targcomp_y, "value_float")
-                local comps = {state=state_comp,length=lengthcomp,foot_x=targcomp_x,foot_y=targcomp_y,direction=dircomp}
-                local data = {id=leg,state=state,length=length,foot_x=foot_x,foot_y=foot_y,direction=dir,toes_x=foot_x,toes_y=foot_y,comps=comps}
-                if state == 1 then
+                local foot_x, foot_y = ComponentGetValue2(footcomp_x, "value_float"), ComponentGetValue2(footcomp_y, "value_float")
+                local targ_x, targ_y = ComponentGetValue2(targcomp_x, "value_float"), ComponentGetValue2(targcomp_y, "value_float")
+                local comps = {state=state_comp,length=lengthcomp,foot_x=footcomp_x,foot_y=footcomp_y,targ_x=targcomp_x,targ_y=targcomp_y,direction=dircomp}
+                local data = {id=leg,state=state,length=length,foot_x=foot_x,foot_y=foot_y,targ_x=targ_x,targ_y=targ_y,direction=dir,toes_x=foot_x,toes_y=foot_y,comps=comps}
+                if state == 2 then
                     table.insert(grounded_legs, data)
-                elseif state == 0 then
+                elseif state == 0 or state == 1 then
                     table.insert(airborne_legs, data)
                 end
             end
@@ -72,16 +75,56 @@ for i,child in ipairs(EntityGetAllChildren(player)) do
     end
 end
 local mid_x, mid_y = (t1.x+t2.x)/2, (t1.y+t2.y)/2
+local vel_x, vel_y = (t1.vx+t2.vx)/2, (t1.vy+t2.vy)/2
 local rot = VecToRads(t1.x, t1.y, t2.x, t2.y) + (math.pi/2)
+local rot_x, rot_y = normalize(t2.x-t1.x, t2.y-t1.y)
+local prev_rot = GetValueNumber("prot", rot)
+local rot_vel = rotDiff(prev_rot, rot)
+SetValueNumber("prot", rot)
 
 --CONTROLS
 local move_x = 0
 local move_y = 0
+local desired_rot = rot
+local crouch = false
 if ComponentGetValue2(controlscomp, "mButtonDownLeft") then move_x = move_x - 60 end
 if ComponentGetValue2(controlscomp, "mButtonDownRight") then move_x = move_x + 60 end
 if ComponentGetValue2(controlscomp, "mButtonDownUp") then move_y = move_y - 60 end
 if ComponentGetValue2(controlscomp, "mButtonDownDown") then move_y = move_y + 60 end
 move_y = move_y - grav
+local vx, vy = normalize(move_x, move_y)
+local vx2, vy2 = normalize(move_x-vel_x,move_y-vel_y)
+local ground_too_close, ground_x, ground_y = RaytracePlatforms(mid_x, mid_y, mid_x, mid_y+12)
+
+if ComponentGetValue2(controlscomp, "mButtonDownKick") then --Are we jumping?
+    move_x, move_y = vx*60*2, vy*60*2
+    desired_rot = VecToRads(0,0,vx,vy)+DegToRads(90)
+elseif ((move_x/math.abs(move_x) ~= (vel_x/math.abs(vel_x))) and math.abs(vel_x-move_x) > 50 and move_x ~= 0) or dotProduct(rot_x,rot_y,vx,vy) <= 0 then --Are we turning around?
+    --GamePrint("turning")
+    if move_x ~= 0 then move_x = move_x/math.abs(move_x) end
+    if ground_too_close then --are we on the ground?
+        if ground_y-mid_y > 4 then move_y = (((ground_y-4)-mid_y)*5) - grav end
+    else
+        move_y = grav
+    end
+    desired_rot = VecToRads(0,0,vx,vy)+DegToRads(90)
+elseif ground_too_close then --are we on the ground?
+    if (move_y > 0) then --crouch
+        move_x = move_x * 0.5
+        move_y = 10
+        desired_rot = sx
+        crouch = true
+    else --stand
+        move_y = (((ground_y-10)-mid_y)*5) - grav
+        desired_rot = clamp(move_x*0.03, -0.1, 0.1)
+    end
+else
+    desired_rot = clamp(move_x*0.03, -0.1, 0.1)
+end
+
+local slide_x, slide_y = (vel_x-move_x)*div*2, (vel_y-move_y)*div*2
+local drift = math.sqrt(slide_x^2 + slide_y^2)
+local torque = clamp(rotDiff(rot, desired_rot)*0.1, -10, 10)
 
 -------------------------------------------------------------------------------------
 --LEGZ 
@@ -93,18 +136,20 @@ for i, torso in ipairs({t1, t2}) do
     local worstFoothold = 1
     local closest_CW = nil
     local closest_CCW = nil
-
+    local x2, y2 = torso.x, torso.y
+    
     --GET TARGET VELOCITY
     --how do we want the torso to be rotated:
-    local rot_mult = mult
-    local desired_rot = clamp(move_x*0.03, -0.1, 0.1)
-    local torque = clamp(rotDiff(rot, desired_rot), -0.1, 0.1)
-    torso.rotate_x, torso.rotate_y = rotatePoint(torso.x, torso.y, mid_x, mid_y, torque)
-    torso.rotate_x, torso.rotate_y = (torso.rotate_x-torso.x)*rot_mult, (torso.rotate_y-torso.y)*rot_mult
+    torso.rotate_x, torso.rotate_y = rotatePoint(torso.x, torso.y, mid_x, mid_y, torque - clamp(rot_vel*0.1, -10, 10))
+    torso.rotate_x, torso.rotate_y = (torso.rotate_x-torso.x)*mult, (torso.rotate_y-torso.y)*mult
 
     --add it all together
-    torso.targ_vx = torso.rotate_x + move_x
-    torso.targ_vy = torso.rotate_y + move_y
+    if crouch and ground_too_close then 
+        torso.targ_vx, torso.targ_vy = move_x, torso.vy
+    else
+        torso.targ_vx = torso.rotate_x + move_x
+        torso.targ_vy = torso.rotate_y + move_y
+    end
     targvel_x = ((targvel_x or torso.targ_vx) + torso.targ_vx)/2
     targvel_y = ((targvel_y or torso.targ_vy) + torso.targ_vy)/2
 
@@ -127,7 +172,7 @@ for i, torso in ipairs({t1, t2}) do
         local idealfoot_x, idealfoot_y = torso.x - ((torso.force_x/torso.force_mag)*footdist), torso.y - ((torso.force_y/torso.force_mag)*footdist)
         local d = Distance(idealfoot_x, idealfoot_y, leg.foot_x, leg.foot_y)
         leg.toes_x, leg.toes_y = MoveCoordsAlongVector(leg.foot_x, leg.foot_y, idealfoot_x, idealfoot_y, math.min(d,2))
-        local toedist = Distance(torso.x, torso.y, foot_x, foot_y)
+        local toedist = Distance(torso.x, torso.y, leg.toes_x, leg.toes_y)
         
         local footvec_x, footvec_y = (leg.toes_x-torso.x)/toedist, (leg.toes_y-torso.y)/toedist
         local alignment = -dotProduct(footvec_x, footvec_y, targvec_x, targvec_y)
@@ -152,49 +197,63 @@ for i, torso in ipairs({t1, t2}) do
         end
         table.insert(alignments, alignment or -1)
 
-
-        if (Distance(leg.foot_x, leg.foot_y, socket_x, socket_y) > length+2) or (step_time > 30 and stability < 0 and #airborne_legs == 0 and (not stepped_this_frame)) then
+        --backup method in case we need it later:
+        local toedist2 = Distance(x2, y2, leg.toes_x, leg.toes_y)
+        x2, y2 = MoveCoordsAlongVector(leg.toes_x, leg.toes_y, x2, y2, math.max(Distance(torso.targ_x, torso.targ_y, leg.toes_x, leg.toes_y), toedist2))--getClosestPointOnLine(leg.toes_x, leg.toes_y, x2, y2, torso.targ_x, torso.targ_y)
+        --if Distance(x3, y3, leg.toes_x, leg.toes_y) > toedist2 then
+        --    x2, y2 = x3, y3
+        --end
+        
+        --retract feet if overextended, or needed elsewhere
+        if (Distance(leg.foot_x, leg.foot_y, socket_x, socket_y) > length+1) or (step_time > 10 and stability < 0 and #airborne_legs == 0 and (not stepped_this_frame)) then
             ComponentSetValue2(leg.comps.state, "value_int", 0)
             stepped_this_frame = true
             step_time = -1
         end
+        --slide:
+        if i == 2 then
+            local foot_x2, foot_y2 = MoveCoordsAlongVector(socket_x, socket_y, leg.foot_x+slide_x, leg.foot_y+slide_y, length+10)
+            local hit, hit_x, hit_y = RaytracePlatforms(socket_x, socket_y, foot_x2, foot_y2)
+            local hitdist = Distance(socket_x, socket_y, hit_x, hit_y)
+            local score1 = Distance(leg.foot_x, leg.foot_y, leg.foot_x+slide_x, leg.foot_y+slide_y)
+            local score2 = Distance(hit_x, hit_y, leg.foot_x+slide_x, leg.foot_y+slide_y)
+            if hit and hitdist >= Distance(socket_x, socket_y, leg.foot_x, leg.foot_y) and hitdist < length+1 and score2 < score1 then
+                ComponentSetValue2(leg.comps.foot_x, "value_float", hit_x)
+                ComponentSetValue2(leg.comps.foot_y, "value_float", hit_y)
+            end
+        end
         IK(leg.id)
     end
     
+    local CW = grounded_legs[closest_CW]
+    local CCW = grounded_legs[closest_CCW]
     if closest_CW and closest_CCW then
-        local CW = grounded_legs[closest_CW]
-        local CCW = grounded_legs[closest_CCW]
-
         local a1 = VecToRads(torso.x, torso.y, torso.force_x, torso.force_y)
         local a2 = VecToRads(torso.x, torso.y, CW.toes_x, CW.toes_y)
         local a3 = VecToRads(torso.x, torso.y, CCW.toes_x, CCW.toes_y)
         local diff1 = math.abs(rotDiff(a2,a1))
         local diff2 = math.abs(rotDiff(a1,a3))
 
-        --GamePrint(diff1 + diff2)
         --if desired force is between foot angles:
         if diff1 + diff2 <= math.pi then
-            GamePrint("1")
             torso.vx = torso.vx + torso.force_x*mult
             torso.vy = torso.vy + torso.force_y*mult
             goto skip
         end
     end
-    if grounded_legs[bestFoothold] then
-        GamePrint("0")
-        local leg = grounded_legs[bestFoothold]
-        local toedist = Distance(torso.x, torso.y, leg.toes_x, leg.toes_y)
-
-        local fx, fy = MoveCoordsAlongVector(leg.toes_x-torso.x, leg.toes_y-torso.y, 0, 0, math.max(Distance(torso.targ_x, torso.targ_y, leg.toes_x, leg.toes_y), toedist))
-        torso.vx = torso.vx + fx*mult
-        torso.vy = torso.vy + fy*mult
-
-        --local fx, fy = getClosestPointOnLine(0, 0, foot_x-torso.x, foot_y-torso.y, torso.targ_x-torso.x, torso.targ_y-torso.y)
-        --if math.sqrt(fx^2 + fy^2) > footdist then
-        --    torso.vx = torso.vx + fx*mult
-        --    torso.vy = torso.vy + fy*mult
-        --end
+    --backup method:
+    if #grounded_legs > 0 then
+        local fx, fy = (x2-torso.x)*mult, (y2-torso.y)*mult
+        torso.vx = torso.vx + fx
+        torso.vy = torso.vy + fy
     end
+    --if grounded_legs[bestFoothold] then
+    --    local leg = grounded_legs[bestFoothold]
+    --    local toedist = Distance(torso.x, torso.y, leg.toes_x, leg.toes_y)
+    --    local fx, fy = MoveCoordsAlongVector(leg.toes_x-torso.x, leg.toes_y-torso.y, 0, 0, math.max(Distance(torso.targ_x, torso.targ_y, leg.toes_x, leg.toes_y), toedist))
+    --    torso.vx = torso.vx + fx*mult
+    --    torso.vy = torso.vy + fy*mult
+    --end
     ::skip::
 end
 
@@ -202,7 +261,7 @@ end
 
 --CALCULATE STABILITY:
 targvel_x, targvel_y = targvel_x or 0, targvel_y or -1
-local vel_x, vel_y = (t1.vx+t2.vx)/2, (t1.vy+t2.vy)/2
+vel_x, vel_y = (t1.vx+t2.vx)/2, (t1.vy+t2.vy)/2
 local targvel_mag = math.sqrt(targvel_x^2 + targvel_y^2)
 local vmag = math.sqrt(vel_x^2 + vel_y^2)
 
@@ -219,6 +278,7 @@ for i,leg in ipairs(airborne_legs) do
     EntitySetTransform(leg.id, socket_x, socket_y)
 
     --FIND WHERE SUPPORT IS NEEDED MOST IN ORDER TO CREATE DESIRED FORCE:
+    --make this overshoot somehow
     local x1, y1 = MoveCoordsAlongVector(mid2_x, mid2_y, mid2_x-targvel_x, mid2_y-targvel_y, leg.length)
     local x2, y2 = MoveCoordsAlongVector(socket_x, socket_y, x1, y1, leg.length)
     x2, y2 = rotatePoint(x2, y2, socket_x, socket_y, math.random(-10,10)*0.1)
@@ -228,14 +288,14 @@ for i,leg in ipairs(airborne_legs) do
         did_hit, hit_x, hit_y = RaytracePlatforms(mid_x, mid_y, x2, y2)
     end
     if did_hit and not stepped_this_frame then
-        ComponentSetValue2(leg.comps.state, "value_int", 1)
+        ComponentSetValue2(leg.comps.state, "value_int", 2)
         ComponentSetValue2(leg.comps.foot_x, "value_float", hit_x)
         ComponentSetValue2(leg.comps.foot_y, "value_float", hit_y)
         stepped_this_frame = true
     else
         local foot_x2, foot_y2 = rotatePoint(socket_x, socket_y-5, socket_x, socket_y, rot+(2.6*sx))
-        ComponentSetValue2(leg.comps.foot_x, "value_float", foot_x2)
-        ComponentSetValue2(leg.comps.foot_y, "value_float", foot_y2)
+        ComponentSetValue2(leg.comps.foot_x, "value_float", ((leg.foot_x*3 + foot_x2)*0.25)+(vel_x*div))
+        ComponentSetValue2(leg.comps.foot_y, "value_float", ((leg.foot_y*3 + foot_y2)*0.25)+(vel_y*div))
     end
     ComponentSetValue2(leg.comps.direction, "value_int", -sx)
     IK(leg.id)
@@ -244,7 +304,7 @@ end
 -------------------------------------------------------------------------------------
 --KEEP TORSO TOGETHER
 -------------------------------------------------------------------------------------
-local dist = Distance(t1.x, t1.y, t2.x, t2.y)
+local dist = (Distance(t1.x, t1.y, t2.x, t2.y))
 local futuredist = Distance(t1.x+(t1.vx*div), t1.y+(t1.vy*div), t2.x+(t2.vx*div), t2.y+(t2.vy*div))
 local offset = ((futuredist-dist))/2
 local vec_x = ((t1.x-t2.x)/dist)*((3-offset))
@@ -274,12 +334,13 @@ if ComponentGetValue2(controlscomp, "mButtonDownThrow") then
     if ComponentGetValue2(controlscomp, "mButtonDownDown") then t1.vy = 40; t2.vy = 40 end
 end
 
-if dist ~= 0 then
+if dist ~= 0 and (not find_stupid_nans({t1.vx,t1.vy,t2.vx,t2.vy})) then
     ComponentSetValue2(t1.cdc, "mVelocity", t1.vx, t1.vy)
     ComponentSetValue2(t2.cdc, "mVelocity", t2.vx, t2.vy)
 else
     ComponentSetValue2(t1.cdc, "mVelocity", 0, 70.620690902)
     ComponentSetValue2(t2.cdc, "mVelocity", 0, -70.620690902)
+    GamePrint("reset")
 end
 EntitySetTransform(t1.i, t1.x, t1.y, rot)
 EntitySetTransform(t2.i, t2.x, t2.y, rot)
