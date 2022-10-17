@@ -35,6 +35,16 @@ function clamp(value, min, max)
     return 0
 end
 
+function find_stupid_nans(list)
+    local count = 0
+    for i, val in ipairs(list) do
+        if not ((val >= 0) or (val <= 0)) then
+            return true
+        end
+    end
+    return false
+end
+
 --SORT A TABLE OF TABLES BY A CERTAIN INDICE OF EACH TABLE:
 function sort(list, index, follow)
     function compare(a,b)

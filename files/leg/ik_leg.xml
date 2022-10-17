@@ -40,6 +40,16 @@
 
 
     <VariableStorageComponent
+    	_tags="foot_x"
+		value_float="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="foot_y"
+		value_float="0"
+		>
+    </VariableStorageComponent>
+    <VariableStorageComponent
     	_tags="target_x"
 		value_float="0"
 		>

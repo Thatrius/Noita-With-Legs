@@ -14,8 +14,8 @@ function IK(leg_entity)
     --General Setup
     ---------------------------------------------------------------------------------
     local ex, ey, er = EntityGetTransform(leg_entity)
-    local targcomp_x = EntityGetFirstComponent(leg_entity, "VariableStorageComponent", "target_x")
-    local targcomp_y = EntityGetFirstComponent(leg_entity, "VariableStorageComponent", "target_y")
+    local targcomp_x = EntityGetFirstComponent(leg_entity, "VariableStorageComponent", "foot_x")
+    local targcomp_y = EntityGetFirstComponent(leg_entity, "VariableStorageComponent", "foot_y")
     local directioncomp = EntityGetFirstComponent(leg_entity, "VariableStorageComponent", "direction")
     local target = {ComponentGetValue2(targcomp_x, "value_float"), ComponentGetValue2(targcomp_y, "value_float")}
     local direction = ComponentGetValue2(directioncomp, "value_int")
