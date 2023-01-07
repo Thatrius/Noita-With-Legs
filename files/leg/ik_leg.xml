@@ -49,6 +49,16 @@
 		value_float="0"
 		>
     </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="relative_x"
+		value_float="0"
+		>
+    </VariableStorageComponent>
+	<VariableStorageComponent
+    	_tags="relative_y"
+		value_float="0"
+		>
+    </VariableStorageComponent>
     <VariableStorageComponent
     	_tags="target_x"
 		value_float="0"
@@ -76,7 +86,7 @@
     </VariableStorageComponent>
 	<VariableStorageComponent
     	_tags="direction"
-		value_int="1"
+		value_float="1.0"
 		>
     </VariableStorageComponent>
 	<VariableStorageComponent

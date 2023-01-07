@@ -5,7 +5,7 @@ function Distance(x1, y1, x2, y2)
 end--> distance
 function normalize(x, y)
     local mag = math.sqrt((x^2) + (y^2))
-    return x/mag, y/mag
+    if (x ~= 0) or (y ~= 0) then return x/mag, y/mag else return 0, 0 end
 end
 function dotProduct(x1, y1, x2, y2)
     return (x1*x2) + (y1*y2)
@@ -132,9 +132,13 @@ function intersection(s1, e1, s2, e2)
 end
 
 --FIND WHERE TWO CIRCLES INTERSECT:
-function CircleIntersections(p1, p2, r1, r2)
+function CircleIntersection(p1, p2, r1, r2, op)
     local d = Distance(p1.x, p1.y, p2.x, p2.y)--distance between circles
     if d == 0 then --if circles share same position
+        if op then
+            d2 = math.sqrt((op.x-p1.x)^2 + (op.y-p1.y)^2)
+            return ((op.x-p1.x)/d2)*((r1+r2)/2), ((op.y-p1.y)/d2)*((r1+r2)/2)
+        end
         return nil, nil
     elseif d > r1 + r2 then --if circles too far away
         local diff = (d - (r1+r2)) / 2
@@ -163,9 +167,69 @@ function CircleIntersections(p1, p2, r1, r2)
                 y = p3.y + v2.y*h}
     local p5 = {x = p3.x - v2.x*h,--second intersection
                 y = p3.y - v2.y*h}
+
+    if op then
+        --return closest to Original Point
+        if Distance(op.x,op.y, p4.x,p4.y) <= Distance(op.x,op.y, p5.x,p5.y) then
+            return p4.x, p4.y
+        end
+        return p5.x, p5.y
+    end
+    --return both
     return p4, p5
 end
 
+--GET INTERSECTIONS BETWEEN CIRCLE AND LINE:
+function CircleLineIntersection(s, e, c, r1, op)
+    local cpol = {}
+    cpol.x,cpol.y = getClosestPointOnLine(s.x,s.y, e.x,e.y, c.x,c.y)
+    local d = math.sqrt(((c.x-cpol.x)^2) + ((c.y-cpol.y)^2))--distance from said point to center of circle
+    local d2 = math.sqrt(r1^2 - d^2)--distance between cpol and either intersection
+    local d3 = math.sqrt(((e.x-cpol.x)^2) + ((e.y-cpol.y)^2))
+    local p1, p2 = {}, {}
+    p1.x, p1.y = MoveCoordsAlongVector(cpol.x,cpol.y,e.x,e.y,d2)
+    p2.x, p2.y = MoveCoordsAlongVector(cpol.x,cpol.y,e.x,e.y,-d2)
+    if op then
+        --return the point that is closest to Original Point
+        if Distance(op.x,op.y, p1.x,p1.y) <= Distance(op.x,op.y, p2.x,p2.y) then
+            return p1.x, p1.y
+        end
+        return p2.x, p2.y
+    end
+    return p1, p2
+end
+
+
+function getNextAvailableFoothold(pos, pos2, vel, targvel, leg_length, grav)
+    --local cx, cy = GameGetCameraPos()
+    --local gui = gui or GuiCreate()
+    --local w, h = GuiGetScreenDimensions(gui)
+    orig_pos = pos
+    orig_pos2 = pos2
+    orig_vel = vel
+    orig_targvel = targvel
+    for i=1,20 do
+        local drift = {}
+        drift.x, drift.y = normalize(vel.x-targvel.x, vel.y-targvel.y)
+        drift.x, drift.y = drift.x*leg_length*2, drift.y*leg_length*2
+        local x1, y1 = CircleLineIntersection({x=pos.x, y=pos.y}, {x=pos.x+drift.x, y=pos.y+drift.y}, {x=pos2.x, y=pos2.y}, leg_length, {x=pos.x+drift.x, y=pos.y+drift.y})
+        local hit, hit_x, hit_y = RaytraceSurfaces(pos.x, pos.y, x1, y1)
+
+        --local angle = math.atan2(-(x1-pos2.x), (y1-pos2.y))
+        --GuiImage( gui, 1, ((pos2.x-cx)*1.5)+(w/4), ((pos2.y-cy)*1.5)+(h/4), "mods/more_physic/files/line.png", 0.5, 1, math.sqrt((x1-pos2.x)^2 + (y1-pos2.y)^2), angle)
+        
+        if hit then
+            --EntitySetTransform(EntityGetWithTag("debug")[4], hit_x, hit_y)
+            rel_x, rel_y = MoveCoordsAlongVector(orig_pos2.x,orig_pos2.y, hit_x, hit_y, math.min(leg_length, Distance(orig_pos2.x,orig_pos2.y,hit_x, hit_y)))
+            return true, rel_x, rel_y
+        end
+
+        vel.y = vel.y+(grav)
+        pos = {x=pos.x+vel.x, y=pos.y+vel.y}
+        pos2 = {x=pos2.x+vel.x, y=pos2.y+vel.y}
+    end
+    return false
+end
 
 --APPLY FORCE TO AN ENTITY:
 function EntityApplyForce(entity, force_x, force_y)
@@ -186,7 +250,17 @@ function EntityApplyForce(entity, force_x, force_y)
     end
 end
 
-
+--FIND WHERE WE'LL NEED FOOT SUPPORT IN THE FUTURE:
+function FindPlaceToStep(foot_x, foot_y, targ_x, targ_y, torso_x, torso_y, vel_x, vel_y, root_x, root_y, leg_length)
+    local targdist = Distance(foot_x, foot_y, targ_x, targ_y)
+    local velmag = math.sqrt(vel_x^2 + vel_y^2)
+    local vec_x, vec_y = MoveCoordsAlongVector(0, 0, vel_x, vel_y, velmag*targdist)
+    
+    local did_hit, hit_x, hit_y = RaytracePlatforms(torso_x+vec_x, torso_y+vec_y, targ_x+vec_x, targ_y+vec_y)
+    if did_hit and not (Distance(root_x+vec_x, root_y+vec_y, hit_x, hit_y) > leg_length) then
+        return did_hit, hit_x-vec_x, hit_y-vec_y
+    end
+end
 
 --GET THE FIRST PROJECTILE THAT'S GOING TO HIT US ON ITS CURRENT TRAJECTORY:
 function GetIncomingProjectile(x, y, radius, projectiles_to_ignore)
